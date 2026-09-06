@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Smart Public Dispenser</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     LOGIN PAGE
+========================================================= -->
+
+<div
+    id="loginPage"
+    class="login-page"
+>
+
+    <div class="login-card">
+
+        <div class="login-logo">
+
+            <div class="logo-icon">
+                💧
+            </div>
+
+        </div>
+
+
+        <h1>
+            Smart Dispenser
+        </h1>
+
+
+        <p class="login-subtitle">
+            Login untuk mengakses dashboard monitoring
+        </p>
+
+
+        <form id="loginForm">
+
+            <div class="input-group">
+
+                <label>
+                    Email
+                </label>
+
+                <div class="input-wrapper">
+
+                    <span>
+                        ✉️
+                    </span>
+
+                    <input
+                        type="email"
+                        id="emailInput"
+                        value="romeoheradhiningrat@gmail.com"
+                        autocomplete="username"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Password
+                </label>
+
+                <div class="input-wrapper">
+
+                    <span>
+                        🔒
+                    </span>
+
+                    <input
+                        type="password"
+                        id="passwordInput"
+                        placeholder="Masukkan password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        id="togglePassword"
+                        class="password-toggle"
+                    >
+                        👁
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                id="loginButton"
+                class="login-button"
+            >
+
+                <span id="loginButtonText">
+                    Login Dashboard
+                </span>
+
+            </button>
+
+
+            <div
+                id="loginError"
+                class="login-error"
+            ></div>
+
+        </form>
+
+
+        <div class="login-footer">
+
+            Smart Public Dispenser
+            <br>
+
+            Firebase Realtime Monitoring
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     DASHBOARD
+========================================================= -->
+
+<div
+    id="dashboardPage"
+    class="dashboard-page hidden"
+>
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="sidebar">
+
+
+        <!-- BRAND -->
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                💧
+            </div>
+
+            <div>
+
+                <div class="brand-title">
+                    Smart Dispenser
+                </div>
+
+                <div class="brand-subtitle">
+                    Monitoring System
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- NAVIGATION -->
+
+        <nav class="sidebar-nav">
+
+            <a
+                href="#dashboard"
+                class="nav-item active"
+            >
+                <span>
+                    📊
+                </span>
+
+                Dashboard
+            </a>
+
+
+            <a
+                href="#monitoring"
+                class="nav-item"
+            >
+                <span>
+                    🌡️
+                </span>
+
+                Monitoring
+            </a>
+
+
+            <a
+                href="#system"
+                class="nav-item"
+            >
+                <span>
+                    ⚙️
+                </span>
+
+                System Status
+            </a>
+
+        </nav>
+
+
+
+        <!-- =================================================
+             DEVICES
+        ================================================== -->
+
+        <div class="device-section">
+
+            <div class="device-section-header">
+
+                <span>
+                    PERANGKAT SAYA
+                </span>
+
+                <button
+                    id="addDeviceButton"
+                    class="add-device-small"
+                    type="button"
+                    title="Tambah perangkat"
+                >
+                    +
+                </button>
+
+            </div>
+
+
+            <div
+                id="deviceList"
+                class="device-list"
+            >
+
+                <!-- DEVICE LIST DIISI JAVASCRIPT -->
+
+            </div>
+
+
+            <button
+                id="addDeviceSidebarButton"
+                class="add-device-button"
+                type="button"
+            >
+
+                <span>
+                    ＋
+                </span>
+
+                Tambah Perangkat
+
+            </button>
+
+        </div>
+
+
+
+        <!-- SIDEBAR BOTTOM -->
+
+        <div class="sidebar-bottom">
+
+
+            <div class="connection-small">
+
+                <span
+                    id="sidebarConnectionDot"
+                    class="status-dot offline"
+                ></span>
+
+
+                <div>
+
+                    <strong id="sidebarConnectionText">
+                        Connecting...
+                    </strong>
+
+                    <small>
+                        Firebase
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="logoutButton"
+                class="logout-button"
+            >
+                🚪 Logout
+            </button>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <div class="mobile-brand">
+                    💧 Smart Dispenser
+                </div>
+
+
+                <div class="dashboard-heading-row">
+
+                    <div>
+
+                        <h1>
+                            Dashboard
+                        </h1>
+
+                        <p>
+                            Monitoring Smart Public Dispenser secara realtime
+                        </p>
+
+                    </div>
+
+
+                    <!-- SELECTED DEVICE -->
+
+                    <div
+                        id="selectedDeviceBadge"
+                        class="selected-device-badge hidden"
+                    >
+
+                        <span class="selected-device-icon">
+                            📡
+                        </span>
+
+                        <div>
+
+                            <small>
+                                PERANGKAT AKTIF
+                            </small>
+
+                            <strong id="selectedDeviceName">
+                                —
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <div class="live-badge">
+
+                    <span
+                        id="liveDot"
+                        class="live-dot"
+                    ></span>
+
+                    <span id="liveText">
+                        Connecting
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             NO DEVICE STATE
+        ================================================== -->
+
+        <section
+            id="noDeviceState"
+            class="no-device-state hidden"
+        >
+
+            <div class="no-device-icon">
+                📡
+            </div>
+
+            <h2>
+                Belum Ada Perangkat
+            </h2>
+
+            <p>
+                Tambahkan perangkat Smart Dispenser terlebih dahulu
+                untuk mulai melakukan monitoring.
+            </p>
+
+            <button
+                id="addDeviceEmptyButton"
+                class="primary-action-button"
+                type="button"
+            >
+                ＋ Tambah Perangkat
+            </button>
+
+        </section>
+
+
+
+        <!-- =================================================
+             DEVICE DASHBOARD
+        ================================================== -->
+
+        <div
+            id="deviceDashboard"
+            class="hidden"
+        >
+
+
+            <!-- =================================================
+                 STAT CARDS
+            ================================================== -->
+
+            <section class="stats-grid">
+
+
+                <!-- GALON -->
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <div>
+
+                            <div class="stat-label">
+                                Status Galon
+                            </div>
+
+                            <div
+                                id="galonStatus"
+                                class="stat-value"
+                            >
+                                Waiting...
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            id="galonIcon"
+                            class="stat-icon blue"
+                        >
+                            💧
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="galonDescription"
+                        class="stat-description"
+                    >
+                        Menunggu data
+                    </div>
+
+                </div>
+
+
+
+                <!-- TOTAL AIR -->
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <div>
+
+                            <div class="stat-label">
+                                Total Penggunaan Air
+                            </div>
+
+                            <div class="stat-value">
+
+                                <span id="totalUsage">
+                                    0.00
+                                </span>
+
+                                <span class="unit">
+                                    L
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="stat-icon green">
+                            🚰
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-description">
+                        Total air yang telah digunakan
+                    </div>
+
+                </div>
+
+
+
+                <!-- SUHU DINGIN -->
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <div>
+
+                            <div class="stat-label">
+                                Suhu Dingin
+                            </div>
+
+                            <div class="stat-value">
+
+                                <span id="coldTemp">
+                                    --
+                                </span>
+
+                                <span class="unit">
+                                    °C
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="stat-icon cyan">
+                            ❄️
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-description">
+                        Temperatur sisi dingin
+                    </div>
+
+                </div>
+
+
+
+                <!-- SUHU PANAS -->
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <div>
+
+                            <div class="stat-label">
+                                Suhu Panas
+                            </div>
+
+                            <div class="stat-value">
+
+                                <span id="hotTemp">
+                                    --
+                                </span>
+
+                                <span class="unit">
+                                    °C
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="stat-icon orange">
+                            🔥
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-description">
+                        Temperatur sisi panas
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 MONITORING
+            ================================================== -->
+
+            <section
+                id="monitoring"
+                class="content-grid"
+            >
+
+
+                <!-- CHART -->
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Monitoring Suhu
+                            </h2>
+
+                            <p>
+                                Data temperatur realtime
+                            </p>
+
+                        </div>
+
+
+                        <div class="chart-live">
+
+                            <span></span>
+
+                            LIVE
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chart-container">
+
+                        <canvas
+                            id="temperatureChart"
+                        ></canvas>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- SYSTEM STATUS -->
+
+                <div
+                    id="system"
+                    class="panel"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                System Status
+                            </h2>
+
+                            <p>
+                                Kondisi koneksi sistem
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="status-list">
+
+
+                        <!-- FIREBASE -->
+
+                        <div class="status-row">
+
+                            <div class="status-info">
+
+                                <div class="status-symbol">
+                                    ☁️
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Firebase
+                                    </strong>
+
+                                    <small>
+                                        Database connection
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="status-result">
+
+                                <span
+                                    id="firebaseDot"
+                                    class="status-dot offline"
+                                ></span>
+
+                                <span id="firebaseStatus">
+                                    Connecting...
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- DATA -->
+
+                        <div class="status-row">
+
+                            <div class="status-info">
+
+                                <div class="status-symbol">
+                                    📡
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Data Dispenser
+                                    </strong>
+
+                                    <small id="dataPathText">
+                                        Waiting...
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="status-result">
+
+                                <span
+                                    id="dataDot"
+                                    class="status-dot offline"
+                                ></span>
+
+                                <span id="dataStatus">
+                                    Waiting...
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- SENSOR -->
+
+                        <div class="status-row">
+
+                            <div class="status-info">
+
+                                <div class="status-symbol">
+                                    🌡️
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Sensor Suhu
+                                    </strong>
+
+                                    <small>
+                                        Temperature sensor
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="status-result">
+
+                                <span
+                                    id="sensorDot"
+                                    class="status-dot offline"
+                                ></span>
+
+                                <span id="sensorStatus">
+                                    Waiting...
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- LAST UPDATE -->
+
+                        <div class="status-row">
+
+                            <div class="status-info">
+
+                                <div class="status-symbol">
+                                    🕒
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Last Update
+                                    </strong>
+
+                                    <small>
+                                        Data terakhir diterima
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="last-update">
+
+                                <span id="lastUpdate">
+                                    —
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 DETAIL DATA
+            ================================================== -->
+
+            <section class="panel detail-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Detail Pembacaan
+                        </h2>
+
+                        <p>
+                            Nilai data dari ESP32
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        id="databasePath"
+                        class="database-path"
+                    >
+                        Firebase /dispenser
+                    </div>
+
+                </div>
+
+
+                <div class="detail-grid">
+
+
+                    <div class="detail-item">
+
+                        <span class="detail-name">
+                            statusGalon
+                        </span>
+
+                        <strong id="detailGalon">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span class="detail-name">
+                            suhuDingin
+                        </span>
+
+                        <strong id="detailCold">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span class="detail-name">
+                            suhuPanas
+                        </span>
+
+                        <strong id="detailHot">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span class="detail-name">
+                            totalPenggunaanAir
+                        </span>
+
+                        <strong id="detailUsage">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <footer class="footer">
+
+            <span>
+                Smart Public Dispenser
+            </span>
+
+            <span>
+                •
+            </span>
+
+            <span>
+                ESP32 + Firebase
+            </span>
+
+            <span>
+                •
+            </span>
+
+            <span id="footerYear">
+                2026
+            </span>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+
+<!-- =========================================================
+     ADD DEVICE MODAL
+========================================================= -->
+
+<div
+    id="deviceModal"
+    class="modal-overlay hidden"
+>
+
+    <div class="device-modal">
+
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="modal-icon">
+                    📡
+                </div>
+
+                <div>
+
+                    <h2>
+                        Tambah Perangkat
+                    </h2>
+
+                    <p>
+                        Daftarkan Smart Dispenser ke dashboard
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="closeDeviceModal"
+                class="modal-close"
+                type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+
+        <form id="deviceForm">
+
+
+            <!-- DEVICE ID -->
+
+            <div class="modal-input-group">
+
+                <label for="deviceIdInput">
+                    ID Perangkat
+                </label>
+
+                <input
+                    type="text"
+                    id="deviceIdInput"
+                    placeholder="Contoh: DISP001"
+                    autocomplete="off"
+                    required
+                >
+
+                <small>
+                    ID harus sama dengan ID perangkat yang terdaftar
+                    di sistem.
+                </small>
+
+            </div>
+
+
+
+            <!-- DEVICE NAME -->
+
+            <div class="modal-input-group">
+
+                <label for="deviceNameInput">
+                    Nama Perangkat
+                </label>
+
+                <input
+                    type="text"
+                    id="deviceNameInput"
+                    placeholder="Contoh: Dispenser Kantin"
+                    autocomplete="off"
+                    required
+                >
+
+            </div>
+
+
+            <div
+                id="deviceFormError"
+                class="device-form-error hidden"
+            ></div>
+
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="cancelDeviceButton"
+                    class="modal-cancel"
+                >
+                    Batal
+                </button>
+
+
+                <button
+                    type="submit"
+                    id="saveDeviceButton"
+                    class="modal-submit"
+                >
+                    Tambahkan Perangkat
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<script src="app.js"></script>
+
+</body>
+</html>
