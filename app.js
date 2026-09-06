@@ -1,281 +1,283 @@
 // ============================================================
-// SMART PUBLIC DISPENSER
-// app.js - FINAL
-// Firebase Authentication + Realtime Database
-// ============================================================
-
-
-// ============================================================
 // FIREBASE CONFIG
-// JANGAN DIUBAH - CONFIG YANG SUDAH WORKING
 // ============================================================
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBbCtWZDMtNB38YUfbWPSGe2F0vSOvm1n8",
-    authDomain: "smart-dispenser-b4450.firebaseapp.com",
-    databaseURL: "https://smart-dispenser-b4450-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "smart-dispenser-b4450",
-    storageBucket: "smart-dispenser-b4450.firebasestorage.app",
-    messagingSenderId: "1075653503034",
-    appId: "1:1075653503034:web:88370909f2535e8ffcad03",
-    measurementId: "G-PS737QN390"
+
+    apiKey:
+        "AIzaSyBbCtWZDMtNB38YUfbWPSGe2F0vSOvm1n8",
+
+    authDomain:
+        "smart-dispenser-b4450.firebaseapp.com",
+
+    databaseURL:
+        "https://smart-dispenser-b4450-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+    projectId:
+        "smart-dispenser-b4450",
+
+    storageBucket:
+        "smart-dispenser-b4450.firebasestorage.app",
+
+    messagingSenderId:
+        "1075653503034",
+
+    appId:
+        "1:1075653503034:web:88370909f2535e8ffcad03",
+
+    measurementId:
+        "G-PS737QN390"
 };
 
 
 // ============================================================
-// FIREBASE INITIALIZATION
+// INITIALIZE FIREBASE
 // ============================================================
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
-const database = firebase.database();
+const auth =
+    firebase.auth();
 
-
-// ============================================================
-// GLOBAL STATE
-// ============================================================
-
-let currentUser = null;
-
-let registeredDevices = {};
-
-let selectedDeviceId = null;
-
-let deviceDataRef = null;
-let connectedRef = null;
-
-let deviceDataListener = null;
-let connectedListener = null;
-
-let temperatureChart = null;
-
-let currentDeviceData = null;
+const database =
+    firebase.database();
 
 
 // ============================================================
-// CONSTANTS
+// DATABASE PATH
 // ============================================================
 
-// Struktur data ESP32 yang sedang digunakan
-const DISPENSER_DATA_PATH = "dispenser";
-
-// Registry perangkat milik user
-const USER_DEVICES_PATH = "users";
+const dispenserRef =
+    database.ref("dispenser");
 
 
 // ============================================================
-// DOM HELPER
+// DOM — LOGIN PAGE
 // ============================================================
 
-function $(id) {
-    return document.getElementById(id);
-}
+const loginPage =
+    document.getElementById("loginPage");
 
+const dashboardPage =
+    document.getElementById("dashboardPage");
 
-// ============================================================
-// DOM ELEMENTS
-// ============================================================
+const loginForm =
+    document.getElementById("loginForm");
 
-const loginPage = $("loginPage");
-const dashboardPage = $("dashboardPage");
+const emailInput =
+    document.getElementById("emailInput");
 
-const loginForm = $("loginForm");
-const emailInput = $("emailInput");
-const passwordInput = $("passwordInput");
+const passwordInput =
+    document.getElementById("passwordInput");
 
-const togglePassword = $("togglePassword");
+const loginButton =
+    document.getElementById("loginButton");
 
-const loginButton = $("loginButton");
-const loginButtonText = $("loginButtonText");
-const loginError = $("loginError");
+const loginButtonText =
+    document.getElementById("loginButtonText");
 
-const logoutButton = $("logoutButton");
+const loginError =
+    document.getElementById("loginError");
 
-const addDeviceButton = $("addDeviceButton");
-const addDeviceSidebarButton = $("addDeviceSidebarButton");
-const addDeviceEmptyButton = $("addDeviceEmptyButton");
+const togglePassword =
+    document.getElementById("togglePassword");
 
-const deviceList = $("deviceList");
-
-const deviceModal = $("deviceModal");
-const closeDeviceModal = $("closeDeviceModal");
-const cancelDeviceButton = $("cancelDeviceButton");
-
-const deviceForm = $("deviceForm");
-const deviceIdInput = $("deviceIdInput");
-const deviceNameInput = $("deviceNameInput");
-
-const deviceFormError = $("deviceFormError");
-const saveDeviceButton = $("saveDeviceButton");
-
-const noDeviceState = $("noDeviceState");
-const deviceDashboard = $("deviceDashboard");
-
-const selectedDeviceBadge = $("selectedDeviceBadge");
-const selectedDeviceName = $("selectedDeviceName");
-
-const galonStatus = $("galonStatus");
-const galonIcon = $("galonIcon");
-const galonDescription = $("galonDescription");
-
-const totalUsage = $("totalUsage");
-const coldTemp = $("coldTemp");
-const hotTemp = $("hotTemp");
-
-const firebaseDot = $("firebaseDot");
-const firebaseStatus = $("firebaseStatus");
-
-const dataDot = $("dataDot");
-const dataStatus = $("dataStatus");
-const dataPathText = $("dataPathText");
-
-const sensorDot = $("sensorDot");
-const sensorStatus = $("sensorStatus");
-
-const lastUpdate = $("lastUpdate");
-
-const detailGalon = $("detailGalon");
-const detailCold = $("detailCold");
-const detailHot = $("detailHot");
-const detailUsage = $("detailUsage");
-
-const databasePath = $("databasePath");
-
-const sidebarConnectionDot = $("sidebarConnectionDot");
-const sidebarConnectionText = $("sidebarConnectionText");
-
-const liveDot = $("liveDot");
-const liveText = $("liveText");
-
-const footerYear = $("footerYear");
+const logoutButton =
+    document.getElementById("logoutButton");
 
 
 // ============================================================
-// INITIAL UI
+// DOM — CONNECTION / SYSTEM STATUS
 // ============================================================
 
-function initializeUI() {
+const firebaseStatus =
+    document.getElementById("firebaseStatus");
 
-    if (footerYear) {
-        footerYear.textContent = new Date().getFullYear();
-    }
+const firebaseStatusDot =
+    document.getElementById("firebaseDot");
 
-    showLoginPage();
+const dataStatus =
+    document.getElementById("dataStatus");
 
-    resetDashboardData();
+const dataStatusDot =
+    document.getElementById("dataDot");
+
+const sensorStatus =
+    document.getElementById("sensorStatus");
+
+const sensorStatusDot =
+    document.getElementById("sensorDot");
+
+const lastUpdate =
+    document.getElementById("lastUpdate");
+
+const sidebarConnectionText =
+    document.getElementById("sidebarConnectionText");
+
+const sidebarConnectionDot =
+    document.getElementById("sidebarConnectionDot");
+
+
+// ============================================================
+// OPTIONAL DOM ELEMENTS
+// ============================================================
+
+const liveDot =
+    document.getElementById("liveDot");
+
+const liveText =
+    document.getElementById("liveText");
+
+const footerYear =
+    document.getElementById("footerYear");
+
+
+// ============================================================
+// DASHBOARD STATE
+// ============================================================
+
+let dashboardInitialized =
+    false;
+
+
+// ============================================================
+// HELPER — SAFE ELEMENT CHECK
+// ============================================================
+
+function elementExists(element) {
+
+    return (
+        element !== null &&
+        element !== undefined
+    );
 
 }
 
 
 // ============================================================
-// PAGE STATE
+// SHOW LOGIN PAGE
 // ============================================================
 
-function showLoginPage() {
+function showLogin() {
 
-    if (loginPage) {
-        loginPage.classList.remove("hidden");
+    if (elementExists(loginPage)) {
+
+        loginPage.classList.remove(
+            "hidden"
+        );
+
     }
 
-    if (dashboardPage) {
-        dashboardPage.classList.add("hidden");
-    }
 
-}
+    if (elementExists(dashboardPage)) {
 
+        dashboardPage.classList.add(
+            "hidden"
+        );
 
-function showDashboardPage() {
-
-    if (loginPage) {
-        loginPage.classList.add("hidden");
-    }
-
-    if (dashboardPage) {
-        dashboardPage.classList.remove("hidden");
     }
 
 }
 
 
 // ============================================================
-// LOGIN ERROR
+// SHOW DASHBOARD PAGE
+// ============================================================
+
+function showDashboard() {
+
+    if (elementExists(loginPage)) {
+
+        loginPage.classList.add(
+            "hidden"
+        );
+
+    }
+
+
+    if (elementExists(dashboardPage)) {
+
+        dashboardPage.classList.remove(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// SHOW LOGIN ERROR
 // ============================================================
 
 function showLoginError(message) {
 
-    if (!loginError) {
+    if (!elementExists(loginError)) {
+
         return;
+
     }
 
-    loginError.textContent = message;
-    loginError.classList.add("show");
+
+    loginError.textContent =
+        message;
+
+    loginError.classList.remove(
+        "hidden"
+    );
 
 }
 
+
+// ============================================================
+// HIDE LOGIN ERROR
+// ============================================================
 
 function hideLoginError() {
 
-    if (!loginError) {
+    if (!elementExists(loginError)) {
+
         return;
+
     }
 
-    loginError.textContent = "";
-    loginError.classList.remove("show");
+
+    loginError.classList.add(
+        "hidden"
+    );
+
+    loginError.textContent =
+        "";
 
 }
 
 
 // ============================================================
-// DEVICE FORM ERROR
+// STATUS DOT
 // ============================================================
 
-function showDeviceFormError(message) {
+function setStatusDot(
+    element,
+    status
+) {
 
-    if (!deviceFormError) {
+    if (!elementExists(element)) {
+
         return;
+
     }
 
-    deviceFormError.textContent = message;
-    deviceFormError.classList.remove("hidden");
 
-}
-
-
-function hideDeviceFormError() {
-
-    if (!deviceFormError) {
-        return;
-    }
-
-    deviceFormError.textContent = "";
-    deviceFormError.classList.add("hidden");
-
-}
+    element.classList.remove(
+        "online",
+        "offline",
+        "waiting"
+    );
 
 
-// ============================================================
-// PASSWORD TOGGLE
-// ============================================================
-
-function handlePasswordToggle() {
-
-    if (!passwordInput) {
-        return;
-    }
-
-    const isPassword =
-        passwordInput.type === "password";
-
-    passwordInput.type =
-        isPassword ? "text" : "password";
-
-    if (togglePassword) {
-        togglePassword.textContent =
-            isPassword ? "🙈" : "👁";
-    }
+    element.classList.add(
+        status
+    );
 
 }
 
@@ -284,120 +286,286 @@ function handlePasswordToggle() {
 // LOGIN
 // ============================================================
 
-async function handleLogin(event) {
+if (elementExists(loginForm)) {
 
-    event.preventDefault();
+    loginForm.addEventListener(
+        "submit",
+        async function(event) {
 
-    hideLoginError();
-
-    const email =
-        emailInput ? emailInput.value.trim() : "";
-
-    const password =
-        passwordInput ? passwordInput.value : "";
-
-    if (!email || !password) {
-
-        showLoginError(
-            "Email dan password wajib diisi."
-        );
-
-        return;
-    }
+            event.preventDefault();
 
 
-    setLoginLoading(true);
+            hideLoginError();
 
 
-    try {
+            // ------------------------------------------------
+            // CHECK INPUT ELEMENT
+            // ------------------------------------------------
 
-        await auth.signInWithEmailAndPassword(
-            email,
-            password
-        );
+            if (
+                !elementExists(emailInput) ||
+                !elementExists(passwordInput)
+            ) {
 
-    } catch (error) {
+                console.error(
+                    "Login input tidak ditemukan."
+                );
 
-        console.error(
-            "Firebase Login Error:",
-            error
-        );
 
-        showLoginError(
-            translateFirebaseAuthError(error)
-        );
+                showLoginError(
+                    "Form login bermasalah. Periksa ID email/password pada HTML."
+                );
 
-    } finally {
 
-        setLoginLoading(false);
+                return;
 
-    }
+            }
+
+
+            // ------------------------------------------------
+            // GET INPUT
+            // ------------------------------------------------
+
+            const email =
+                emailInput.value.trim();
+
+            const password =
+                passwordInput.value;
+
+
+            // ------------------------------------------------
+            // VALIDATION
+            // ------------------------------------------------
+
+            if (
+                !email ||
+                !password
+            ) {
+
+                showLoginError(
+                    "Email dan password wajib diisi."
+                );
+
+
+                return;
+
+            }
+
+
+            // ------------------------------------------------
+            // DISABLE LOGIN BUTTON
+            // ------------------------------------------------
+
+            if (elementExists(loginButton)) {
+
+                loginButton.disabled =
+                    true;
+
+            }
+
+
+            if (elementExists(loginButtonText)) {
+
+                loginButtonText.textContent =
+                    "Sedang masuk...";
+
+            }
+
+
+            // ------------------------------------------------
+            // FIREBASE AUTH LOGIN
+            // ------------------------------------------------
+
+            try {
+
+                await auth.signInWithEmailAndPassword(
+                    email,
+                    password
+                );
+
+
+                console.log(
+                    "Firebase Login Berhasil:",
+                    email
+                );
+
+            }
+
+
+            catch (error) {
+
+                console.error(
+                    "Firebase Login Error:",
+                    error
+                );
+
+
+                let message =
+                    "Login gagal. Periksa email dan password.";
+
+
+                switch (error.code) {
+
+                    case "auth/invalid-email":
+
+                        message =
+                            "Format email tidak valid.";
+
+                        break;
+
+
+                    case "auth/user-not-found":
+
+                        message =
+                            "Akun Firebase tidak ditemukan.";
+
+                        break;
+
+
+                    case "auth/wrong-password":
+
+                        message =
+                            "Password yang dimasukkan salah.";
+
+                        break;
+
+
+                    case "auth/invalid-credential":
+
+                        message =
+                            "Email atau password salah.";
+
+                        break;
+
+
+                    case "auth/too-many-requests":
+
+                        message =
+                            "Terlalu banyak percobaan login. Coba lagi nanti.";
+
+                        break;
+
+
+                    case "auth/user-disabled":
+
+                        message =
+                            "Akun Firebase ini telah dinonaktifkan.";
+
+                        break;
+
+
+                    case "auth/network-request-failed":
+
+                        message =
+                            "Koneksi internet bermasalah.";
+
+                        break;
+
+
+                    case "auth/operation-not-allowed":
+
+                        message =
+                            "Login Email/Password belum diaktifkan di Firebase Authentication.";
+
+                        break;
+
+
+                    case "auth/api-key-not-valid":
+
+                        message =
+                            "Firebase API Key tidak valid.";
+
+                        break;
+
+
+                    default:
+
+                        if (error.message) {
+
+                            console.error(
+                                "Detail Firebase:",
+                                error.message
+                            );
+
+                        }
+
+                        break;
+
+                }
+
+
+                showLoginError(
+                    message
+                );
+
+            }
+
+
+            finally {
+
+                if (elementExists(loginButton)) {
+
+                    loginButton.disabled =
+                        false;
+
+                }
+
+
+                if (elementExists(loginButtonText)) {
+
+                    loginButtonText.textContent =
+                        "Login Dashboard";
+
+                }
+
+            }
+
+        }
+    );
 
 }
 
 
 // ============================================================
-// LOGIN BUTTON LOADING
+// SHOW / HIDE PASSWORD
 // ============================================================
 
-function setLoginLoading(loading) {
+if (
+    elementExists(togglePassword) &&
+    elementExists(passwordInput)
+) {
 
-    if (!loginButton) {
-        return;
-    }
+    togglePassword.addEventListener(
+        "click",
+        function() {
 
-    loginButton.disabled = loading;
+            if (
+                passwordInput.type ===
+                "password"
+            ) {
 
-    if (loginButtonText) {
-
-        loginButtonText.textContent =
-            loading
-                ? "Memproses..."
-                : "Login Dashboard";
-
-    }
-
-}
+                passwordInput.type =
+                    "text";
 
 
-// ============================================================
-// FIREBASE AUTH ERROR TRANSLATION
-// ============================================================
+                togglePassword.textContent =
+                    "🙈";
 
-function translateFirebaseAuthError(error) {
+            }
 
-    if (!error) {
-        return "Terjadi kesalahan saat login.";
-    }
+            else {
 
-    switch (error.code) {
+                passwordInput.type =
+                    "password";
 
-        case "auth/invalid-email":
-            return "Format email tidak valid.";
 
-        case "auth/user-not-found":
-            return "Akun tidak ditemukan.";
+                togglePassword.textContent =
+                    "👁";
 
-        case "auth/wrong-password":
-            return "Password salah.";
+            }
 
-        case "auth/invalid-credential":
-            return "Email atau password salah.";
-
-        case "auth/too-many-requests":
-            return "Terlalu banyak percobaan login. Coba lagi nanti.";
-
-        case "auth/network-request-failed":
-            return "Gagal terhubung ke Firebase.";
-
-        case "auth/user-disabled":
-            return "Akun ini telah dinonaktifkan.";
-
-        default:
-            return error.message ||
-                "Login gagal. Silakan coba lagi.";
-
-    }
+        }
+    );
 
 }
 
@@ -406,1627 +574,560 @@ function translateFirebaseAuthError(error) {
 // LOGOUT
 // ============================================================
 
-async function handleLogout() {
+if (elementExists(logoutButton)) {
 
-    try {
+    logoutButton.addEventListener(
+        "click",
+        async function() {
 
-        await auth.signOut();
+            try {
 
-    } catch (error) {
+                await auth.signOut();
 
-        console.error(
-            "Logout Error:",
-            error
-        );
 
-    }
+                console.log(
+                    "Firebase Logout Berhasil."
+                );
+
+            }
+
+
+            catch (error) {
+
+                console.error(
+                    "Logout Error:",
+                    error
+                );
+
+            }
+
+        }
+    );
 
 }
 
 
 // ============================================================
 // AUTH STATE
-// SATU-SATUNYA AUTH LISTENER
 // ============================================================
 
-auth.onAuthStateChanged(async (user) => {
+auth.onAuthStateChanged(
+    function(user) {
 
-    currentUser = user;
+        if (user) {
 
-    if (user) {
-
-        console.log(
-            "Firebase Authenticated:",
-            user.email
-        );
-
-        showDashboardPage();
-
-        updateFirebaseConnectionUI(false);
-
-        await loadUserDevices();
-
-    } else {
-
-        console.log(
-            "Firebase User Signed Out"
-        );
-
-        cleanupDeviceListener();
-
-        cleanupConnectionListener();
-
-        registeredDevices = {};
-        selectedDeviceId = null;
-        currentDeviceData = null;
-
-        renderDeviceList();
-
-        resetDashboardData();
-
-        showLoginPage();
-
-    }
-
-});
-
-
-// ============================================================
-// USER DEVICES
-// ============================================================
-
-function getUserDevicesRef() {
-
-    if (!currentUser) {
-        return null;
-    }
-
-    return database.ref(
-        `${USER_DEVICES_PATH}/${currentUser.uid}/devices`
-    );
-
-}
-
-
-// ============================================================
-// LOAD REGISTERED DEVICES
-// ============================================================
-
-async function loadUserDevices() {
-
-    if (!currentUser) {
-        return;
-    }
-
-    try {
-
-        const snapshot =
-            await getUserDevicesRef().once("value");
-
-        registeredDevices =
-            snapshot.val() || {};
-
-        renderDeviceList();
-
-
-        const deviceIds =
-            Object.keys(registeredDevices);
-
-
-        if (deviceIds.length === 0) {
-
-            selectedDeviceId = null;
-
-            showNoDeviceState();
-
-            cleanupDeviceListener();
-
-            return;
-        }
-
-
-        // Coba pertahankan device aktif sebelumnya
-        if (
-            selectedDeviceId &&
-            registeredDevices[selectedDeviceId]
-        ) {
-
-            selectDevice(
-                selectedDeviceId
+            console.log(
+                "Firebase Authenticated:",
+                user.email
             );
 
-            return;
-        }
 
+            showDashboard();
 
-        // Jika belum ada device aktif,
-        // pilih device pertama
-        selectDevice(deviceIds[0]);
 
-
-    } catch (error) {
-
-        console.error(
-            "Load User Devices Error:",
-            error
-        );
-
-        registeredDevices = {};
-
-        renderDeviceList();
-
-        showNoDeviceState();
-
-    }
-
-}
-
-
-// ============================================================
-// SAVE DEVICE
-// ============================================================
-
-async function saveDevice(event) {
-
-    event.preventDefault();
-
-    hideDeviceFormError();
-
-
-    if (!currentUser) {
-
-        showDeviceFormError(
-            "Sesi login tidak ditemukan. Silakan login kembali."
-        );
-
-        return;
-    }
-
-
-    let deviceId =
-        deviceIdInput.value.trim();
-
-    let deviceName =
-        deviceNameInput.value.trim();
-
-
-    // Normalisasi ID
-    deviceId =
-        deviceId
-            .toUpperCase()
-            .replace(/\s+/g, "");
-
-
-    if (!deviceId) {
-
-        showDeviceFormError(
-            "ID perangkat wajib diisi."
-        );
-
-        return;
-    }
-
-
-    if (!deviceName) {
-
-        showDeviceFormError(
-            "Nama perangkat wajib diisi."
-        );
-
-        return;
-    }
-
-
-    // Hanya karakter aman untuk Firebase key
-    if (/[.#$[\]/]/.test(deviceId)) {
-
-        showDeviceFormError(
-            "ID perangkat mengandung karakter yang tidak valid."
-        );
-
-        return;
-    }
-
-
-    // Cek duplicate
-    if (registeredDevices[deviceId]) {
-
-        showDeviceFormError(
-            "Perangkat dengan ID tersebut sudah ditambahkan."
-        );
-
-        return;
-    }
-
-
-    setDeviceSaveLoading(true);
-
-
-    try {
-
-        const deviceRef =
-            getUserDevicesRef().child(deviceId);
-
-
-        const deviceObject = {
-
-            id: deviceId,
-
-            name: deviceName,
-
-            createdAt:
-                firebase.database.ServerValue.TIMESTAMP
-
-        };
-
-
-        await deviceRef.set(
-            deviceObject
-        );
-
-
-        registeredDevices[deviceId] =
-            deviceObject;
-
-
-        renderDeviceList();
-
-        closeDeviceModalUI();
-
-        deviceIdInput.value = "";
-        deviceNameInput.value = "";
-
-        selectDevice(deviceId);
-
-
-    } catch (error) {
-
-        console.error(
-            "Save Device Error:",
-            error
-        );
-
-        showDeviceFormError(
-            "Gagal menambahkan perangkat. Silakan coba lagi."
-        );
-
-    } finally {
-
-        setDeviceSaveLoading(false);
-
-    }
-
-}
-
-
-// ============================================================
-// DEVICE SAVE LOADING
-// ============================================================
-
-function setDeviceSaveLoading(loading) {
-
-    if (!saveDeviceButton) {
-        return;
-    }
-
-    saveDeviceButton.disabled =
-        loading;
-
-    saveDeviceButton.textContent =
-        loading
-            ? "Menyimpan..."
-            : "Tambahkan Perangkat";
-
-}
-
-
-// ============================================================
-// DELETE DEVICE
-// ============================================================
-
-async function deleteDevice(deviceId) {
-
-    if (!currentUser) {
-        return;
-    }
-
-    if (!registeredDevices[deviceId]) {
-        return;
-    }
-
-
-    const deviceName =
-        registeredDevices[deviceId].name ||
-        deviceId;
-
-
-    const confirmed =
-        window.confirm(
-            `Hapus perangkat "${deviceName}" dari dashboard?`
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    try {
-
-        await getUserDevicesRef()
-            .child(deviceId)
-            .remove();
-
-
-        delete registeredDevices[deviceId];
-
-
-        const remainingIds =
-            Object.keys(registeredDevices);
-
-
-        if (selectedDeviceId === deviceId) {
-
-            cleanupDeviceListener();
-
-            if (remainingIds.length > 0) {
-
-                selectedDeviceId =
-                    remainingIds[0];
-
-                selectDevice(
-                    selectedDeviceId
-                );
-
-            } else {
-
-                selectedDeviceId = null;
-
-                renderDeviceList();
-
-                showNoDeviceState();
-
-                resetDashboardData();
-
-            }
-
-        } else {
-
-            renderDeviceList();
+            /*
+             * Dashboard akan diinisialisasi
+             * pada Part 2.
+             */
 
         }
 
+        else {
 
-    } catch (error) {
-
-        console.error(
-            "Delete Device Error:",
-            error
-        );
-
-        alert(
-            "Gagal menghapus perangkat."
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// RENDER DEVICE LIST
-// ============================================================
-
-function renderDeviceList() {
-
-    if (!deviceList) {
-        return;
-    }
-
-
-    deviceList.innerHTML = "";
-
-
-    const deviceIds =
-        Object.keys(registeredDevices);
-
-
-    if (deviceIds.length === 0) {
-
-        const empty =
-            document.createElement("div");
-
-        empty.className =
-            "device-empty";
-
-        empty.textContent =
-            "Belum ada perangkat";
-
-        deviceList.appendChild(
-            empty
-        );
-
-        return;
-    }
-
-
-    deviceIds.forEach((deviceId) => {
-
-        const device =
-            registeredDevices[deviceId];
-
-
-        const button =
-            document.createElement("button");
-
-        button.type = "button";
-
-        button.className =
-            "device-item";
-
-
-        if (deviceId === selectedDeviceId) {
-
-            button.classList.add(
-                "active"
+            console.log(
+                "Firebase: Not Authenticated"
             );
+
+
+            showLogin();
+
+
+            dashboardInitialized =
+                false;
 
         }
 
-
-        const icon =
-            document.createElement("div");
-
-        icon.className =
-            "device-item-icon";
-
-        icon.textContent =
-            "📡";
-
-
-        const info =
-            document.createElement("div");
-
-        info.className =
-            "device-item-info";
-
-
-        const name =
-            document.createElement("strong");
-
-        name.textContent =
-            device.name || deviceId;
-
-
-        const id =
-            document.createElement("small");
-
-        id.textContent =
-            deviceId;
-
-
-        info.appendChild(name);
-        info.appendChild(id);
-
-
-        const status =
-            document.createElement("span");
-
-        status.className =
-            "device-item-status";
-
-        status.textContent =
-            "●";
-
-
-        button.appendChild(icon);
-        button.appendChild(info);
-        button.appendChild(status);
-
-
-        button.addEventListener(
-            "click",
-            () => {
-                selectDevice(deviceId);
-            }
-        );
-
-
-        // Klik kanan untuk hapus perangkat
-        button.addEventListener(
-            "contextmenu",
-            (event) => {
-
-                event.preventDefault();
-
-                deleteDevice(deviceId);
-
-            }
-        );
-
-
-        deviceList.appendChild(
-            button
-        );
-
-    });
-
-}
+    }
+);
 
 
 // ============================================================
-// SELECT DEVICE
+// FIREBASE CONNECTION MONITOR
 // ============================================================
 
-function selectDevice(deviceId) {
+function monitorFirebaseConnection() {
 
-    if (!deviceId) {
-        return;
-    }
-
-
-    if (!registeredDevices[deviceId]) {
-
-        console.warn(
-            "Device tidak terdaftar:",
-            deviceId
-        );
-
-        return;
-    }
-
-
-    selectedDeviceId =
-        deviceId;
-
-
-    currentDeviceData =
-        null;
-
-
-    renderDeviceList();
-
-    updateSelectedDeviceUI();
-
-    showDeviceDashboard();
-
-    resetDashboardData();
-
-    setupDeviceListener();
-
-}
-
-
-// ============================================================
-// SELECTED DEVICE UI
-// ============================================================
-
-function updateSelectedDeviceUI() {
-
-    const device =
-        registeredDevices[selectedDeviceId];
-
-
-    if (!device) {
-
-        if (selectedDeviceBadge) {
-            selectedDeviceBadge.classList.add(
-                "hidden"
-            );
-        }
-
-        return;
-    }
-
-
-    if (selectedDeviceBadge) {
-
-        selectedDeviceBadge.classList.remove(
-            "hidden"
-        );
-
-    }
-
-
-    if (selectedDeviceName) {
-
-        selectedDeviceName.textContent =
-            device.name || selectedDeviceId;
-
-    }
-
-
-    if (databasePath) {
-
-        databasePath.textContent =
-            "Firebase /dispenser";
-
-    }
-
-}
-
-
-// ============================================================
-// MODAL
-// ============================================================
-
-function openDeviceModal() {
-
-    hideDeviceFormError();
-
-    if (deviceModal) {
-
-        deviceModal.classList.remove(
-            "hidden"
-        );
-
-    }
-
-
-    if (deviceIdInput) {
-
-        deviceIdInput.focus();
-
-    }
-
-}
-
-
-function closeDeviceModalUI() {
-
-    hideDeviceFormError();
-
-    if (deviceModal) {
-
-        deviceModal.classList.add(
-            "hidden"
-        );
-
-    }
-
-}
-
-
-function handleModalOutsideClick(event) {
-
-    if (
-        deviceModal &&
-        event.target === deviceModal
-    ) {
-
-        closeDeviceModalUI();
-
-    }
-
-}
-
-
-// ============================================================
-// NO DEVICE / DEVICE DASHBOARD STATE
-// ============================================================
-
-function showNoDeviceState() {
-
-    if (noDeviceState) {
-
-        noDeviceState.classList.remove(
-            "hidden"
-        );
-
-    }
-
-
-    if (deviceDashboard) {
-
-        deviceDashboard.classList.add(
-            "hidden"
-        );
-
-    }
-
-
-    if (selectedDeviceBadge) {
-
-        selectedDeviceBadge.classList.add(
-            "hidden"
-        );
-
-    }
-
-}
-
-
-function showDeviceDashboard() {
-
-    if (noDeviceState) {
-
-        noDeviceState.classList.add(
-            "hidden"
-        );
-
-    }
-
-
-    if (deviceDashboard) {
-
-        deviceDashboard.classList.remove(
-            "hidden"
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// DATABASE DEVICE LISTENER
-// ============================================================
-
-function setupDeviceListener() {
-
-    cleanupDeviceListener();
-
-
-    /*
-     * Untuk struktur ESP32 yang sekarang:
-     *
-     * /dispenser
-     *   ├── statusGalon
-     *   ├── suhuDingin
-     *   ├── suhuPanas
-     *   └── totalPenggunaanAir
-     *
-     * Device registry hanya menentukan perangkat
-     * mana yang ditampilkan pada dashboard.
-     */
-
-    deviceDataRef =
-        database.ref(
-            DISPENSER_DATA_PATH
-        );
-
-
-    deviceDataListener =
-        (snapshot) => {
-
-            handleDeviceData(
-                snapshot
-            );
-
-        };
-
-
-    deviceDataRef.on(
-        "value",
-        deviceDataListener,
-        (error) => {
-
-            console.error(
-                "Firebase Device Data Error:",
-                error
-            );
-
-            setDataStatus(
-                false,
-                "Error"
-            );
-
-        }
-    );
-
-
-    updateDataPathUI();
-
-}
-
-
-// ============================================================
-// CLEANUP DEVICE LISTENER
-// ============================================================
-
-function cleanupDeviceListener() {
-
-    if (
-        deviceDataRef &&
-        deviceDataListener
-    ) {
-
-        deviceDataRef.off(
-            "value",
-            deviceDataListener
-        );
-
-    }
-
-
-    deviceDataRef = null;
-    deviceDataListener = null;
-
-}
-
-
-// ============================================================
-// HANDLE DEVICE DATA
-// ============================================================
-
-function handleDeviceData(snapshot) {
-
-    const data =
-        snapshot.val();
-
-
-    if (!data) {
-
-        currentDeviceData = null;
-
-        setDataStatus(
-            false,
-            "No Data"
-        );
-
-        setSensorStatus(
-            false,
-            "Waiting..."
-        );
-
-        resetSensorValues();
-
-        return;
-    }
-
-
-    currentDeviceData =
-        data;
-
-
-    setDataStatus(
-        true,
-        "Online"
-    );
-
-
-    updateDashboardValues(
-        data
-    );
-
-
-    updateChart(
-        data
-    );
-
-
-    updateLastUpdate(
-        data
-    );
-
-}
-
-
-// ============================================================
-// UPDATE DASHBOARD VALUES
-// ============================================================
-
-function updateDashboardValues(data) {
-
-    const galon =
-        normalizeGalonStatus(
-            data.statusGalon
-        );
-
-
-    const cold =
-        toNumber(
-            data.suhuDingin
-        );
-
-
-    const hot =
-        toNumber(
-            data.suhuPanas
-        );
-
-
-    const usage =
-        toNumber(
-            data.totalPenggunaanAir
-        );
-
-
-    // --------------------------------------------------------
-    // GALON
-    // --------------------------------------------------------
-
-    if (galonStatus) {
-
-        galonStatus.textContent =
-            galon.label;
-
-    }
-
-
-    if (galonDescription) {
-
-        galonDescription.textContent =
-            galon.description;
-
-    }
-
-
-    if (galonIcon) {
-
-        galonIcon.textContent =
-            galon.icon;
-
-        galonIcon.classList.remove(
-            "blue",
-            "green",
-            "orange",
-            "cyan"
-        );
-
-        galonIcon.classList.add(
-            galon.colorClass
-        );
-
-    }
-
-
-    // --------------------------------------------------------
-    // TOTAL AIR
-    // --------------------------------------------------------
-
-    if (totalUsage) {
-
-        totalUsage.textContent =
-            formatNumber(
-                usage,
-                2
-            );
-
-    }
-
-
-    // --------------------------------------------------------
-    // SUHU DINGIN
-    // --------------------------------------------------------
-
-    if (coldTemp) {
-
-        coldTemp.textContent =
-            isValidNumber(cold)
-                ? formatNumber(cold, 1)
-                : "--";
-
-    }
-
-
-    // --------------------------------------------------------
-    // SUHU PANAS
-    // --------------------------------------------------------
-
-    if (hotTemp) {
-
-        hotTemp.textContent =
-            isValidNumber(hot)
-                ? formatNumber(hot, 1)
-                : "--";
-
-    }
-
-
-    // --------------------------------------------------------
-    // DETAIL DATA
-    // --------------------------------------------------------
-
-    if (detailGalon) {
-
-        detailGalon.textContent =
-            data.statusGalon ?? "—";
-
-    }
-
-
-    if (detailCold) {
-
-        detailCold.textContent =
-            isValidNumber(cold)
-                ? `${formatNumber(cold, 1)} °C`
-                : "—";
-
-    }
-
-
-    if (detailHot) {
-
-        detailHot.textContent =
-            isValidNumber(hot)
-                ? `${formatNumber(hot, 1)} °C`
-                : "—";
-
-    }
-
-
-    if (detailUsage) {
-
-        detailUsage.textContent =
-            isValidNumber(usage)
-                ? `${formatNumber(usage, 2)} L`
-                : "—";
-
-    }
-
-
-    setSensorStatus(
-        isValidNumber(cold) ||
-        isValidNumber(hot),
-        (
-            isValidNumber(cold) ||
-            isValidNumber(hot)
-        )
-            ? "Active"
-            : "Waiting..."
-    );
-
-}
-
-
-// ============================================================
-// RESET SENSOR VALUES
-// ============================================================
-
-function resetSensorValues() {
-
-    if (galonStatus) {
-        galonStatus.textContent =
-            "Waiting...";
-    }
-
-    if (galonDescription) {
-        galonDescription.textContent =
-            "Menunggu data";
-    }
-
-    if (galonIcon) {
-        galonIcon.textContent =
-            "💧";
-    }
-
-    if (totalUsage) {
-        totalUsage.textContent =
-            "0.00";
-    }
-
-    if (coldTemp) {
-        coldTemp.textContent =
-            "--";
-    }
-
-    if (hotTemp) {
-        hotTemp.textContent =
-            "--";
-    }
-
-    if (detailGalon) {
-        detailGalon.textContent =
-            "—";
-    }
-
-    if (detailCold) {
-        detailCold.textContent =
-            "—";
-    }
-
-    if (detailHot) {
-        detailHot.textContent =
-            "—";
-    }
-
-    if (detailUsage) {
-        detailUsage.textContent =
-            "—";
-    }
-
-}
-
-
-// ============================================================
-// RESET ENTIRE DASHBOARD DATA
-// ============================================================
-
-function resetDashboardData() {
-
-    resetSensorValues();
-
-
-    if (dataPathText) {
-
-        dataPathText.textContent =
-            "Waiting...";
-
-    }
-
-
-    if (lastUpdate) {
-
-        lastUpdate.textContent =
-            "—";
-
-    }
-
-
-    setDataStatus(
-        false,
-        "Waiting..."
-    );
-
-
-    setSensorStatus(
-        false,
-        "Waiting..."
-    );
-
-
-    destroyTemperatureChart();
-
-}
-
-
-// ============================================================
-// DATA PATH UI
-// ============================================================
-
-function updateDataPathUI() {
-
-    if (dataPathText) {
-
-        dataPathText.textContent =
-            "/dispenser";
-
-    }
-
-
-    if (databasePath) {
-
-        databasePath.textContent =
-            "Firebase /dispenser";
-
-    }
-
-}
-
-
-// ============================================================
-// FIREBASE CONNECTION
-// ============================================================
-
-function setupConnectionListener() {
-
-    cleanupConnectionListener();
-
-
-    connectedRef =
+    const connectionRef =
         database.ref(
             ".info/connected"
         );
 
 
-    connectedListener =
-        (snapshot) => {
+    connectionRef.on(
+        "value",
+        function(snapshot) {
 
             const connected =
                 snapshot.val() === true;
 
 
-            updateFirebaseConnectionUI(
-                connected
-            );
+            // =================================================
+            // CONNECTED
+            // =================================================
 
-        };
+            if (connected) {
+
+                if (
+                    elementExists(
+                        firebaseStatus
+                    )
+                ) {
+
+                    firebaseStatus.textContent =
+                        "Connected";
+
+                }
 
 
-    connectedRef.on(
-        "value",
-        connectedListener
+                if (
+                    elementExists(
+                        sidebarConnectionText
+                    )
+                ) {
+
+                    sidebarConnectionText.textContent =
+                        "Connected";
+
+                }
+
+
+                if (
+                    elementExists(
+                        liveText
+                    )
+                ) {
+
+                    liveText.textContent =
+                        "Live";
+
+                }
+
+
+                setStatusDot(
+                    firebaseStatusDot,
+                    "online"
+                );
+
+
+                setStatusDot(
+                    sidebarConnectionDot,
+                    "online"
+                );
+
+
+                if (
+                    elementExists(
+                        liveDot
+                    )
+                ) {
+
+                    liveDot.classList.add(
+                        "online"
+                    );
+
+                }
+
+            }
+
+
+            // =================================================
+            // DISCONNECTED
+            // =================================================
+
+            else {
+
+                if (
+                    elementExists(
+                        firebaseStatus
+                    )
+                ) {
+
+                    firebaseStatus.textContent =
+                        "Disconnected";
+
+                }
+
+
+                if (
+                    elementExists(
+                        sidebarConnectionText
+                    )
+                ) {
+
+                    sidebarConnectionText.textContent =
+                        "Disconnected";
+
+                }
+
+
+                if (
+                    elementExists(
+                        liveText
+                    )
+                ) {
+
+                    liveText.textContent =
+                        "Offline";
+
+                }
+
+
+                setStatusDot(
+                    firebaseStatusDot,
+                    "offline"
+                );
+
+
+                setStatusDot(
+                    sidebarConnectionDot,
+                    "offline"
+                );
+
+
+                if (
+                    elementExists(
+                        liveDot
+                    )
+                ) {
+
+                    liveDot.classList.remove(
+                        "online"
+                    );
+
+                }
+
+            }
+
+        }
     );
 
 }
 
 
 // ============================================================
-// CLEANUP CONNECTION LISTENER
+// START FIREBASE CONNECTION MONITOR
 // ============================================================
 
-function cleanupConnectionListener() {
-
-    if (
-        connectedRef &&
-        connectedListener
-    ) {
-
-        connectedRef.off(
-            "value",
-            connectedListener
-        );
-
-    }
+monitorFirebaseConnection();
 
 
-    connectedRef = null;
-    connectedListener = null;
+// ============================================================
+// FOOTER YEAR
+// ============================================================
+
+if (elementExists(footerYear)) {
+
+    footerYear.textContent =
+        new Date().getFullYear();
 
 }
 
 
 // ============================================================
-// FIREBASE CONNECTION UI
+// DOM — DASHBOARD DATA
 // ============================================================
 
-function updateFirebaseConnectionUI(
-    connected
-) {
+const galonStatus =
+    document.getElementById("galonStatus");
 
-    if (firebaseDot) {
+const galonDescription =
+    document.getElementById("galonDescription");
 
-        firebaseDot.classList.remove(
-            "online",
-            "offline"
-        );
+const totalWater =
+    document.getElementById("totalUsage");
 
-        firebaseDot.classList.add(
-            connected
-                ? "online"
-                : "offline"
-        );
+const coldTemperature =
+    document.getElementById("coldTemp");
 
-    }
+const hotTemperature =
+    document.getElementById("hotTemp");
 
+const detailGalon =
+    document.getElementById("detailGalon");
 
-    if (firebaseStatus) {
+const detailCold =
+    document.getElementById("detailCold");
 
-        firebaseStatus.textContent =
-            connected
-                ? "Connected"
-                : "Offline";
+const detailHot =
+    document.getElementById("detailHot");
 
-    }
+const detailWater =
+    document.getElementById("detailUsage");
 
 
-    if (sidebarConnectionDot) {
+// ============================================================
+// INITIALIZE DASHBOARD
+// ============================================================
 
-        sidebarConnectionDot.classList.remove(
-            "online",
-            "offline"
-        );
+function initializeDashboard() {
 
-        sidebarConnectionDot.classList.add(
-            connected
-                ? "online"
-                : "offline"
-        );
+    if (dashboardInitialized) {
+
+        return;
 
     }
 
 
-    if (sidebarConnectionText) {
-
-        sidebarConnectionText.textContent =
-            connected
-                ? "Connected"
-                : "Offline";
-
-    }
+    dashboardInitialized =
+        true;
 
 
-    if (liveDot) {
-
-        liveDot.classList.toggle(
-            "online",
-            connected
-        );
-
-    }
+    console.log(
+        "Initializing Smart Public Dispenser Dashboard..."
+    );
 
 
-    if (liveText) {
-
-        liveText.textContent =
-            connected
-                ? "Live"
-                : "Offline";
-
-    }
+    monitorDispenser();
 
 }
 
 
 // ============================================================
-// DATA STATUS UI
+// REALTIME DISPENSER MONITOR
+// ============================================================
+
+function monitorDispenser() {
+
+    /*
+     * Membaca seluruh data dari:
+     *
+     * /dispenser
+     *
+     * Firebase akan mengirim data secara realtime
+     * setiap kali ada perubahan.
+     */
+
+
+    dispenserRef.on(
+
+        "value",
+
+        function(snapshot) {
+
+            // =================================================
+            // NO DATA
+            // =================================================
+
+            if (!snapshot.exists()) {
+
+                console.warn(
+                    "Path /dispenser tidak ditemukan."
+                );
+
+
+                setDataStatus(
+                    "No Data",
+                    "waiting"
+                );
+
+
+                setSensorStatus(
+                    "Waiting",
+                    "waiting"
+                );
+
+
+                if (
+                    elementExists(liveText)
+                ) {
+
+                    liveText.textContent =
+                        "No Data";
+
+                }
+
+
+                return;
+
+            }
+
+
+            // =================================================
+            // GET FIREBASE DATA
+            // =================================================
+
+            const data =
+                snapshot.val();
+
+
+            console.log(
+                "Firebase /dispenser:",
+                data
+            );
+
+
+            // =================================================
+            // UPDATE DASHBOARD
+            // =================================================
+
+            updateDashboard(
+                data
+            );
+
+
+            // =================================================
+            // DATA STATUS
+            // =================================================
+
+            setDataStatus(
+                "Receiving Data",
+                "online"
+            );
+
+
+            // =================================================
+            // SENSOR STATUS
+            // =================================================
+
+            setSensorStatus(
+                "Active",
+                "online"
+            );
+
+
+            // =================================================
+            // LIVE STATUS
+            // =================================================
+
+            if (
+                elementExists(liveText)
+            ) {
+
+                liveText.textContent =
+                    "Live";
+
+            }
+
+
+            // =================================================
+            // LAST UPDATE
+            // =================================================
+
+            updateLastUpdateTime();
+
+        },
+
+
+        function(error) {
+
+            console.error(
+                "Firebase Database Read Error:",
+                error
+            );
+
+
+            // ===============================================
+            // DATA ERROR
+            // ===============================================
+
+            setDataStatus(
+                "Read Error",
+                "offline"
+            );
+
+
+            // ===============================================
+            // SENSOR ERROR
+            // ===============================================
+
+            setSensorStatus(
+                "Unavailable",
+                "offline"
+            );
+
+
+            // ===============================================
+            // LIVE ERROR
+            // ===============================================
+
+            if (
+                elementExists(liveText)
+            ) {
+
+                liveText.textContent =
+                    "Database Error";
+
+            }
+
+        }
+
+    );
+
+}
+
+
+// ============================================================
+// DATA STATUS
 // ============================================================
 
 function setDataStatus(
-    online,
-    text
+    text,
+    status
 ) {
 
-    if (dataDot) {
-
-        dataDot.classList.remove(
-            "online",
-            "offline"
-        );
-
-        dataDot.classList.add(
-            online
-                ? "online"
-                : "offline"
-        );
-
-    }
-
-
-    if (dataStatus) {
+    if (
+        elementExists(dataStatus)
+    ) {
 
         dataStatus.textContent =
             text;
 
     }
 
+
+    setStatusDot(
+        dataStatusDot,
+        status
+    );
+
 }
 
 
 // ============================================================
-// SENSOR STATUS UI
+// SENSOR STATUS
 // ============================================================
 
 function setSensorStatus(
-    online,
-    text
+    text,
+    status
 ) {
 
-    if (sensorDot) {
-
-        sensorDot.classList.remove(
-            "online",
-            "offline"
-        );
-
-        sensorDot.classList.add(
-            online
-                ? "online"
-                : "offline"
-        );
-
-    }
-
-
-    if (sensorStatus) {
+    if (
+        elementExists(sensorStatus)
+    ) {
 
         sensorStatus.textContent =
             text;
 
     }
 
-}
 
-
-// ============================================================
-// LAST UPDATE
-// ============================================================
-
-function updateLastUpdate(data) {
-
-    let timestamp = null;
-
-
-    // Support beberapa kemungkinan nama timestamp
-    if (data.timestamp) {
-
-        timestamp =
-            parseTimestamp(
-                data.timestamp
-            );
-
-    } else if (data.lastUpdate) {
-
-        timestamp =
-            parseTimestamp(
-                data.lastUpdate
-            );
-
-    } else if (data.updatedAt) {
-
-        timestamp =
-            parseTimestamp(
-                data.updatedAt
-            );
-
-    }
-
-
-    // Jika ESP32 belum mengirim timestamp,
-    // gunakan waktu saat data diterima.
-    if (!timestamp) {
-
-        timestamp =
-            new Date();
-
-    }
-
-
-    if (lastUpdate) {
-
-        lastUpdate.textContent =
-            formatDateTime(
-                timestamp
-            );
-
-    }
+    setStatusDot(
+        sensorStatusDot,
+        status
+    );
 
 }
 
 
 // ============================================================
-// TEMPERATURE CHART
+// LAST UPDATE TIME
 // ============================================================
 
-function initializeTemperatureChart() {
-
-    const canvas =
-        $("temperatureChart");
-
-
-    if (!canvas) {
-        return;
-    }
-
+function updateLastUpdateTime() {
 
     if (
-        typeof Chart === "undefined"
-    ) {
-
-        console.warn(
-            "Chart.js belum tersedia."
-        );
-
-        return;
-    }
-
-
-    if (temperatureChart) {
-        return;
-    }
-
-
-    const context =
-        canvas.getContext("2d");
-
-
-    temperatureChart =
-        new Chart(
-            context,
-            {
-                type: "line",
-
-                data: {
-                    labels: [],
-
-                    datasets: [
-
-                        {
-                            label: "Suhu Dingin",
-
-                            data: [],
-
-                            tension: 0.35,
-
-                            borderWidth: 2,
-
-                            pointRadius: 2,
-
-                            fill: false
-                        },
-
-                        {
-                            label: "Suhu Panas",
-
-                            data: [],
-
-                            tension: 0.35,
-
-                            borderWidth: 2,
-
-                            pointRadius: 2,
-
-                            fill: false
-                        }
-
-                    ]
-                },
-
-                options: {
-
-                    responsive: true,
-
-                    maintainAspectRatio: false,
-
-                    animation: false,
-
-                    interaction: {
-                        intersect: false,
-                        mode: "index"
-                    },
-
-                    scales: {
-
-                        x: {
-
-                            ticks: {
-                                maxTicksLimit: 8
-                            }
-
-                        },
-
-                        y: {
-
-                            beginAtZero: false,
-
-                            title: {
-                                display: true,
-                                text: "°C"
-                            }
-
-                        }
-
-                    },
-
-                    plugins: {
-
-                        legend: {
-                            display: true
-                        }
-
-                    }
-
-                }
-
-            }
-        );
-
-}
-
-
-// ============================================================
-// UPDATE CHART
-// ============================================================
-
-function updateChart(data) {
-
-    if (!temperatureChart) {
-
-        initializeTemperatureChart();
-
-    }
-
-
-    if (!temperatureChart) {
-        return;
-    }
-
-
-    const cold =
-        toNumber(
-            data.suhuDingin
-        );
-
-    const hot =
-        toNumber(
-            data.suhuPanas
-        );
-
-
-    if (
-        !isValidNumber(cold) &&
-        !isValidNumber(hot)
+        !elementExists(lastUpdate)
     ) {
 
         return;
@@ -2038,54 +1139,995 @@ function updateChart(data) {
         new Date();
 
 
-    const label =
-        formatChartTime(
-            now
-        );
-
-
-    const chartData =
-        temperatureChart.data;
-
-
-    chartData.labels.push(
-        label
-    );
-
-
-    chartData.datasets[0].data.push(
-        isValidNumber(cold)
-            ? cold
-            : null
-    );
-
-
-    chartData.datasets[1].data.push(
-        isValidNumber(hot)
-            ? hot
-            : null
-    );
-
-
-    // Simpan maksimal 30 titik
-    const maxPoints = 30;
-
-
-    while (
-        chartData.labels.length >
-        maxPoints
-    ) {
-
-        chartData.labels.shift();
-
-        chartData.datasets.forEach(
-            (dataset) => {
-                dataset.data.shift();
+    lastUpdate.textContent =
+        now.toLocaleTimeString(
+            "id-ID",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
             }
         );
 
+}
+
+
+// ============================================================
+// UPDATE DASHBOARD
+// ============================================================
+
+function updateDashboard(data) {
+
+    /*
+     * Struktur data yang digunakan:
+     *
+     * dispenser
+     * ├── statusGalon
+     * ├── suhuDingin
+     * ├── suhuPanas
+     * └── totalPenggunaanAir
+     */
+
+
+    if (
+        !data ||
+        typeof data !== "object"
+    ) {
+
+        console.warn(
+            "Data dispenser tidak valid:",
+            data
+        );
+
+
+        return;
+
     }
 
+
+    // ========================================================
+    // STATUS GALON
+    // ========================================================
+
+    updateGalonStatus(
+        data.statusGalon
+    );
+
+
+    // ========================================================
+    // SUHU DINGIN
+    // ========================================================
+
+    updateColdTemperature(
+        data.suhuDingin
+    );
+
+
+    // ========================================================
+    // SUHU PANAS
+    // ========================================================
+
+    updateHotTemperature(
+        data.suhuPanas
+    );
+
+
+    // ========================================================
+    // TOTAL PENGGUNAAN AIR
+    // ========================================================
+
+    updateWaterUsage(
+        data.totalPenggunaanAir
+    );
+
+}
+
+
+// ============================================================
+// UPDATE GALON STATUS
+// ============================================================
+
+function updateGalonStatus(
+    value
+) {
+
+    const statusGalon =
+        Number(value);
+
+
+    // ========================================================
+    // GALON TERSEDIA
+    // ========================================================
+
+    if (
+        statusGalon === 1
+    ) {
+
+        if (
+            elementExists(galonStatus)
+        ) {
+
+            galonStatus.textContent =
+                "Tersedia";
+
+        }
+
+
+        if (
+            elementExists(galonDescription)
+        ) {
+
+            galonDescription.textContent =
+                "Galon tersedia dan dapat digunakan";
+
+        }
+
+
+        if (
+            elementExists(detailGalon)
+        ) {
+
+            detailGalon.textContent =
+                "1";
+
+        }
+
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // GALON HABIS
+    // ========================================================
+
+    if (
+        statusGalon === 0
+    ) {
+
+        if (
+            elementExists(galonStatus)
+        ) {
+
+            galonStatus.textContent =
+                "Habis";
+
+        }
+
+
+        if (
+            elementExists(galonDescription)
+        ) {
+
+            galonDescription.textContent =
+                "Air galon habis";
+
+        }
+
+
+        if (
+            elementExists(detailGalon)
+        ) {
+
+            detailGalon.textContent =
+                "0";
+
+        }
+
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // UNKNOWN
+    // ========================================================
+
+    if (
+        elementExists(galonStatus)
+    ) {
+
+        galonStatus.textContent =
+            "Unknown";
+
+    }
+
+
+    if (
+        elementExists(galonDescription)
+    ) {
+
+        galonDescription.textContent =
+            "Status galon tidak diketahui";
+
+    }
+
+
+    if (
+        elementExists(detailGalon)
+    ) {
+
+        detailGalon.textContent =
+            "—";
+
+    }
+
+}
+
+
+// ============================================================
+// UPDATE COLD TEMPERATURE
+// ============================================================
+
+function updateColdTemperature(
+    value
+) {
+
+    const cold =
+        Number(value);
+
+
+    if (
+        Number.isFinite(cold)
+    ) {
+
+        if (
+            elementExists(coldTemperature)
+        ) {
+
+            coldTemperature.textContent =
+                cold.toFixed(1);
+
+        }
+
+
+        if (
+            elementExists(detailCold)
+        ) {
+
+            detailCold.textContent =
+                cold.toFixed(1) +
+                " °C";
+
+        }
+
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // INVALID / EMPTY VALUE
+    // ========================================================
+
+    if (
+        elementExists(coldTemperature)
+    ) {
+
+        coldTemperature.textContent =
+            "--";
+
+    }
+
+
+    if (
+        elementExists(detailCold)
+    ) {
+
+        detailCold.textContent =
+            "—";
+
+    }
+
+}
+
+
+// ============================================================
+// UPDATE HOT TEMPERATURE
+// ============================================================
+
+function updateHotTemperature(
+    value
+) {
+
+    const hot =
+        Number(value);
+
+
+    if (
+        Number.isFinite(hot)
+    ) {
+
+        if (
+            elementExists(hotTemperature)
+        ) {
+
+            hotTemperature.textContent =
+                hot.toFixed(1);
+
+        }
+
+
+        if (
+            elementExists(detailHot)
+        ) {
+
+            detailHot.textContent =
+                hot.toFixed(1) +
+                " °C";
+
+        }
+
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // INVALID / EMPTY VALUE
+    // ========================================================
+
+    if (
+        elementExists(hotTemperature)
+    ) {
+
+        hotTemperature.textContent =
+            "--";
+
+    }
+
+
+    if (
+        elementExists(detailHot)
+    ) {
+
+        detailHot.textContent =
+            "—";
+
+    }
+
+}
+
+
+// ============================================================
+// UPDATE WATER USAGE
+// ============================================================
+
+function updateWaterUsage(
+    value
+) {
+
+    const water =
+        Number(value);
+
+
+    if (
+        Number.isFinite(water)
+    ) {
+
+        if (
+            elementExists(totalWater)
+        ) {
+
+            totalWater.textContent =
+                water.toFixed(2);
+
+        }
+
+
+        if (
+            elementExists(detailWater)
+        ) {
+
+            detailWater.textContent =
+                water.toFixed(2) +
+                " L";
+
+        }
+
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // INVALID / EMPTY VALUE
+    // ========================================================
+
+    if (
+        elementExists(totalWater)
+    ) {
+
+        totalWater.textContent =
+            "0.00";
+
+    }
+
+
+    if (
+        elementExists(detailWater)
+    ) {
+
+        detailWater.textContent =
+            "—";
+
+    }
+
+}
+
+
+// ============================================================
+// DASHBOARD STARTUP
+// ============================================================
+//
+// Auth sudah berhasil pada Part 1.
+// Setelah user login, fungsi ini akan dipanggil.
+//
+// Kita panggil monitor Firebase di sini agar database
+// hanya dibaca ketika dashboard memang digunakan.
+// ============================================================
+
+auth.onAuthStateChanged(
+    function(user) {
+
+        if (!user) {
+
+            return;
+
+        }
+
+
+        showDashboard();
+
+
+        initializeDashboard();
+
+    }
+);
+
+
+// ============================================================
+// CHART STATE
+// ============================================================
+
+let temperatureChart =
+    null;
+
+
+const chartLabels =
+    [];
+
+
+const coldData =
+    [];
+
+
+const hotData =
+    [];
+
+
+const MAX_POINTS =
+    30;
+
+
+// ============================================================
+// INITIALIZE TEMPERATURE CHART
+// ============================================================
+
+function initializeChart() {
+
+    const canvas =
+        document.getElementById(
+            "temperatureChart"
+        );
+
+
+    if (!canvas) {
+
+        console.warn(
+            "Canvas #temperatureChart tidak ditemukan."
+        );
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // CEK CHART.JS
+    // ========================================================
+
+    if (
+        typeof Chart ===
+        "undefined"
+    ) {
+
+        console.error(
+            "Chart.js belum dimuat."
+        );
+
+        return;
+
+    }
+
+
+    const ctx =
+        canvas.getContext(
+            "2d"
+        );
+
+
+    if (!ctx) {
+
+        console.error(
+            "Canvas context tidak tersedia."
+        );
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // HINDARI CHART GANDA
+    // ========================================================
+
+    if (
+        temperatureChart
+    ) {
+
+        try {
+
+            temperatureChart.destroy();
+
+        }
+
+        catch (error) {
+
+            console.warn(
+                "Gagal destroy chart lama:",
+                error
+            );
+
+        }
+
+
+        temperatureChart =
+            null;
+
+    }
+
+
+    // ========================================================
+    // CREATE CHART
+    // ========================================================
+
+    temperatureChart =
+        new Chart(
+            ctx,
+            {
+
+                type:
+                    "line",
+
+
+                data: {
+
+                    labels:
+                        chartLabels,
+
+
+                    datasets: [
+
+                        // ====================================
+                        // SUHU DINGIN
+                        // ====================================
+
+                        {
+
+                            label:
+                                "Suhu Dingin",
+
+                            data:
+                                coldData,
+
+                            borderWidth:
+                                2,
+
+                            pointRadius:
+                                2,
+
+                            pointHoverRadius:
+                                5,
+
+                            tension:
+                                0.35,
+
+                            fill:
+                                false
+
+                        },
+
+
+                        // ====================================
+                        // SUHU PANAS
+                        // ====================================
+
+                        {
+
+                            label:
+                                "Suhu Panas",
+
+                            data:
+                                hotData,
+
+                            borderWidth:
+                                2,
+
+                            pointRadius:
+                                2,
+
+                            pointHoverRadius:
+                                5,
+
+                            tension:
+                                0.35,
+
+                            fill:
+                                false
+
+                        }
+
+                    ]
+
+                },
+
+
+                options: {
+
+                    responsive:
+                        true,
+
+                    maintainAspectRatio:
+                        false,
+
+
+                    interaction: {
+
+                        intersect:
+                            false,
+
+                        mode:
+                            "index"
+
+                    },
+
+
+                    plugins: {
+
+                        legend: {
+
+                            position:
+                                "top",
+
+                            align:
+                                "end",
+
+
+                            labels: {
+
+                                usePointStyle:
+                                    true,
+
+                                boxWidth:
+                                    7,
+
+                                padding:
+                                    15,
+
+
+                                font: {
+
+                                    family:
+                                        "Inter",
+
+                                    size:
+                                        10
+
+                                }
+
+                            }
+
+                        },
+
+
+                        tooltip: {
+
+                            backgroundColor:
+                                "#111827",
+
+                            padding:
+                                10,
+
+
+                            titleFont: {
+
+                                size:
+                                    11
+
+                            },
+
+
+                            bodyFont: {
+
+                                size:
+                                    11
+
+                            },
+
+
+                            callbacks: {
+
+                                label:
+                                    function(context) {
+
+                                        const value =
+                                            context.parsed.y;
+
+
+                                        if (
+                                            value ===
+                                            null ||
+                                            value ===
+                                            undefined
+                                        ) {
+
+                                            return (
+                                                context.dataset.label +
+                                                ": —"
+                                            );
+
+                                        }
+
+
+                                        return (
+                                            context.dataset.label +
+                                            ": " +
+                                            Number(value).toFixed(1) +
+                                            " °C"
+                                        );
+
+                                    }
+
+                            }
+
+                        }
+
+                    },
+
+
+                    scales: {
+
+                        // ====================================
+                        // X AXIS
+                        // ====================================
+
+                        x: {
+
+                            grid: {
+
+                                display:
+                                    false
+
+                            },
+
+
+                            ticks: {
+
+                                font: {
+
+                                    family:
+                                        "Inter",
+
+                                    size:
+                                        9
+
+                                },
+
+
+                                color:
+                                    "#9ca3af"
+
+                            }
+
+                        },
+
+
+                        // ====================================
+                        // Y AXIS
+                        // ====================================
+
+                        y: {
+
+                            beginAtZero:
+                                false,
+
+
+                            grid: {
+
+                                color:
+                                    "#f1f5f9"
+
+                            },
+
+
+                            ticks: {
+
+                                font: {
+
+                                    family:
+                                        "Inter",
+
+                                    size:
+                                        9
+
+                                },
+
+
+                                color:
+                                    "#9ca3af",
+
+
+                                callback:
+                                    function(value) {
+
+                                        return (
+                                            value +
+                                            " °C"
+                                        );
+
+                                    }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+
+    console.log(
+        "Temperature chart initialized."
+    );
+
+}
+
+
+// ============================================================
+// UPDATE TEMPERATURE CHART
+// ============================================================
+
+function updateTemperatureChart(
+    cold,
+    hot
+) {
+
+    // ========================================================
+    // CHART BELUM TERSEDIA
+    // ========================================================
+
+    if (
+        !temperatureChart
+    ) {
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // TIDAK ADA DATA VALID
+    // ========================================================
+
+    if (
+        !Number.isFinite(cold) &&
+        !Number.isFinite(hot)
+    ) {
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // CURRENT TIME
+    // ========================================================
+
+    const now =
+        new Date();
+
+
+    const time =
+        now.toLocaleTimeString(
+            "id-ID",
+            {
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit",
+
+                second:
+                    "2-digit"
+            }
+        );
+
+
+    // ========================================================
+    // ADD LABEL
+    // ========================================================
+
+    chartLabels.push(
+        time
+    );
+
+
+    // ========================================================
+    // ADD COLD DATA
+    // ========================================================
+
+    coldData.push(
+
+        Number.isFinite(cold)
+            ? cold
+            : null
+
+    );
+
+
+    // ========================================================
+    // ADD HOT DATA
+    // ========================================================
+
+    hotData.push(
+
+        Number.isFinite(hot)
+            ? hot
+            : null
+
+    );
+
+
+    // ========================================================
+    // LIMIT DATA POINTS
+    // ========================================================
+
+    while (
+        chartLabels.length >
+        MAX_POINTS
+    ) {
+
+        chartLabels.shift();
+
+        coldData.shift();
+
+        hotData.shift();
+
+    }
+
+
+    // ========================================================
+    // UPDATE CHART
+    // ========================================================
 
     temperatureChart.update(
         "none"
@@ -2095,529 +2137,31 @@ function updateChart(data) {
 
 
 // ============================================================
-// DESTROY CHART
+// CLEAR TEMPERATURE CHART
 // ============================================================
 
-function destroyTemperatureChart() {
+function clearTemperatureChart() {
 
-    if (temperatureChart) {
+    chartLabels.length =
+        0;
 
-        temperatureChart.destroy();
 
-        temperatureChart = null;
+    coldData.length =
+        0;
 
-    }
 
-}
-
-
-// ============================================================
-// GALON STATUS NORMALIZER
-// ============================================================
-
-function normalizeGalonStatus(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return {
-
-            label: "Unknown",
-
-            description: "Menunggu status galon",
-
-            icon: "💧",
-
-            colorClass: "blue"
-
-        };
-
-    }
-
-
-    const normalized =
-        String(value)
-            .trim()
-            .toLowerCase();
-
-
-    // Penuh
-    if (
-        normalized === "penuh" ||
-        normalized === "full" ||
-        normalized === "1" ||
-        normalized === "true"
-    ) {
-
-        return {
-
-            label: "Penuh",
-
-            description:
-                "Persediaan air tersedia",
-
-            icon: "💧",
-
-            colorClass: "green"
-
-        };
-
-    }
-
-
-    // Kosong
-    if (
-        normalized === "kosong" ||
-        normalized === "empty" ||
-        normalized === "0" ||
-        normalized === "false"
-    ) {
-
-        return {
-
-            label: "Kosong",
-
-            description:
-                "Persediaan air perlu diisi",
-
-            icon: "⚠️",
-
-            colorClass: "orange"
-
-        };
-
-    }
-
-
-    // Rendah
-    if (
-        normalized.includes("rendah") ||
-        normalized.includes("low")
-    ) {
-
-        return {
-
-            label: "Rendah",
-
-            description:
-                "Persediaan air mulai menipis",
-
-            icon: "⚠️",
-
-            colorClass: "orange"
-
-        };
-
-    }
-
-
-    return {
-
-        label: String(value),
-
-        description:
-            "Status galon dari perangkat",
-
-        icon: "💧",
-
-        colorClass: "blue"
-
-    };
-
-}
-
-
-// ============================================================
-// NUMBER HELPERS
-// ============================================================
-
-function toNumber(value) {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-
-        return null;
-
-    }
-
-
-    const number =
-        Number(
-            String(value)
-                .replace(",", ".")
-        );
-
-
-    return Number.isFinite(number)
-        ? number
-        : null;
-
-}
-
-
-function isValidNumber(value) {
-
-    return (
-        typeof value === "number" &&
-        Number.isFinite(value)
-    );
-
-}
-
-
-function formatNumber(
-    value,
-    decimals = 2
-) {
-
-    if (!isValidNumber(value)) {
-        return "--";
-    }
-
-
-    return value.toFixed(
-        decimals
-    );
-
-}
-
-
-// ============================================================
-// TIMESTAMP HELPERS
-// ============================================================
-
-function parseTimestamp(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return null;
-
-    }
-
-
-    // Firebase timestamp milliseconds
-    if (
-        typeof value === "number"
-    ) {
-
-        const date =
-            new Date(value);
-
-        return isNaN(
-            date.getTime()
-        )
-            ? null
-            : date;
-
-    }
-
-
-    const parsed =
-        new Date(value);
+    hotData.length =
+        0;
 
 
     if (
-        isNaN(
-            parsed.getTime()
-        )
+        temperatureChart
     ) {
 
-        return null;
-
-    }
-
-
-    return parsed;
-
-}
-
-
-// ============================================================
-// DATE FORMAT
-// ============================================================
-
-function formatDateTime(date) {
-
-    if (!date) {
-        return "—";
-    }
-
-
-    return date.toLocaleString(
-        "id-ID",
-        {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit"
-        }
-    );
-
-}
-
-
-// ============================================================
-// CHART TIME FORMAT
-// ============================================================
-
-function formatChartTime(date) {
-
-    if (!date) {
-        return "";
-    }
-
-
-    return date.toLocaleTimeString(
-        "id-ID",
-        {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit"
-        }
-    );
-
-}
-
-
-// ============================================================
-// EVENT LISTENERS
-// ============================================================
-
-// Login
-if (loginForm) {
-
-    loginForm.addEventListener(
-        "submit",
-        handleLogin
-    );
-
-}
-
-
-// Password toggle
-if (togglePassword) {
-
-    togglePassword.addEventListener(
-        "click",
-        handlePasswordToggle
-    );
-
-}
-
-
-// Logout
-if (logoutButton) {
-
-    logoutButton.addEventListener(
-        "click",
-        handleLogout
-    );
-
-}
-
-
-// Add device buttons
-if (addDeviceButton) {
-
-    addDeviceButton.addEventListener(
-        "click",
-        openDeviceModal
-    );
-
-}
-
-
-if (addDeviceSidebarButton) {
-
-    addDeviceSidebarButton.addEventListener(
-        "click",
-        openDeviceModal
-    );
-
-}
-
-
-if (addDeviceEmptyButton) {
-
-    addDeviceEmptyButton.addEventListener(
-        "click",
-        openDeviceModal
-    );
-
-}
-
-
-// Close modal
-if (closeDeviceModal) {
-
-    closeDeviceModal.addEventListener(
-        "click",
-        closeDeviceModalUI
-    );
-
-}
-
-
-if (cancelDeviceButton) {
-
-    cancelDeviceButton.addEventListener(
-        "click",
-        closeDeviceModalUI
-    );
-
-}
-
-
-if (deviceModal) {
-
-    deviceModal.addEventListener(
-        "click",
-        handleModalOutsideClick
-    );
-
-}
-
-
-// Device form
-if (deviceForm) {
-
-    deviceForm.addEventListener(
-        "submit",
-        saveDevice
-    );
-
-}
-
-
-// ============================================================
-// SIDEBAR NAVIGATION
-// ============================================================
-
-document
-    .querySelectorAll(".nav-item")
-    .forEach((item) => {
-
-        item.addEventListener(
-            "click",
-            () => {
-
-                document
-                    .querySelectorAll(".nav-item")
-                    .forEach((nav) => {
-
-                        nav.classList.remove(
-                            "active"
-                        );
-
-                    });
-
-
-                item.classList.add(
-                    "active"
-                );
-
-            }
-        );
-
-    });
-
-
-// ============================================================
-// HASH NAVIGATION
-// ============================================================
-
-function handleHashNavigation() {
-
-    const hash =
-        window.location.hash;
-
-
-    if (!hash) {
-        return;
-    }
-
-
-    const target =
-        document.querySelector(
-            hash
-        );
-
-
-    if (target) {
-
-        setTimeout(
-            () => {
-
-                target.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
-
-            },
-            50
+        temperatureChart.update(
+            "none"
         );
 
     }
 
 }
-
-
-window.addEventListener(
-    "hashchange",
-    handleHashNavigation
-);
-
-
-// ============================================================
-// START FIREBASE CONNECTION MONITOR
-// ============================================================
-
-setupConnectionListener();
-
-
-// ============================================================
-// INITIALIZE UI
-// ============================================================
-
-initializeUI();
-
-
-// ============================================================
-// DEBUG INFO
-// ============================================================
-
-console.log(
-    "============================================"
-);
-
-console.log(
-    "SMART PUBLIC DISPENSER"
-);
-
-console.log(
-    "app.js loaded successfully"
-);
-
-console.log(
-    "Firebase Project:",
-    firebaseConfig.projectId
-);
-
-console.log(
-    "Database:",
-    firebaseConfig.databaseURL
-);
-
-console.log(
-    "============================================"
-);
